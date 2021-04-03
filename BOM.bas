@@ -4,17 +4,16 @@ Option Explicit
 
 
 Sub aSetKey()
-
-    Application.OnKey "{@}", "gotoCell"
+    Application.OnKey "{@}", "gotoValue"
     
 End Sub
 
 
-Sub gotoCell()
+Sub gotoValue()
     
     Dim FindString As String            'Declare var for textbox
     Dim Rng As Range                    'Declare var for finding feeder name
-    FindString = InputBox("Val")        'Get part number
+    FindString = InputBox("Value")        'Get part number
     If Trim(FindString) <> "" Then      'Check if part number empty
         With Worksheets("Sheet1").Range("C:C")                  'Using the Part number range
             Set Rng = .Find(What:=FindString, _
@@ -34,39 +33,41 @@ Sub gotoCell()
                 Select Case InfoBox.Popup("Click OK or do nothing.", _
                     AckTime, "Nothing Found", 0)
                     
-                End If
-            End With
-        End If
+                End Select
+            End If
+        End With
+    End If
+    
+    Dim Feeder As String
+    Dim Feede As String
+    Dim Feed As String
+    
+    Feeder = InputBox("Feeder")   'get feeder from scan
+    Feede = Right(Feeder, Len(Feeder) - 2)  'delete @ and ~
+    If Len(Feede) = 1 And Feede = "1" Then  'If length is 1 char, and the char is 1, do nothing (exit/cancel)
         
-        Dim Feeder As String
-        Dim Feede As String
-        Dim Feed As String
-        Feeder = InputBox("Feed")   'get feeder from scan
-        Feede = Right(Feeder, Len(Feeder) - 2)  'delete @ and ~
-        If Len(Feede) = 1 And Feede = "1" Then  'If length is 1 char, and the char is 1, do nothing (exit/cancel)
-            
-        Else
-            Feed = (Left(Feede, 1)) 'else, select feeder first letter and recreate based on which letter
-            Feede = Right(Feede, Len(Feede) - 1)
-            Feede = Feede - 1
-            Select Case Feed
-            Case "B"
-                Feede = "B" & Feede
-            Case "D"
-                Feede = "D" & Feede
-            Case "G"
-                Feede = "G" & Feede
-            Case "R"
-                Application.Goto Rng.Offset(0, 3), True 'Select Rotation column if @~R selected
-            End Select
-            Application.ActiveCell = Feede
-            Beep
-        End If
-        
-        
-        
-        
-    End Sub
+    Else
+        Feed = (Left(Feede, 1)) 'else, assign feeder letter to Feed
+        Feede = Right(Feede, Len(Feede) - 1)    'isolate feeder number
+        Feede = Feede - 1                       'subtract 1; feeder is 27, cell is a28, so qr reads 28....
+        Select Case Feed    'select feeder based on letter, recreate
+        Case "B"
+            Feede = "B" & Feede
+        Case "D"
+            Feede = "D" & Feede
+        Case "G"
+            Feede = "G" & Feede
+        Case "R"
+            Application.Goto Rng.Offset(0, 3), True 'Select Rotation column if @~R selected
+        End Select
+        Application.ActiveCell = Feede  'write cell with feeder / rotation
+        Beep
+    End If
+    
+    
+    
+    
+End Sub
 
 
 
@@ -86,7 +87,7 @@ Sub UpdateFeeder_List()
     DPos = InStrRev(BOMPath, "Desktop")
     FeederPath = Left(BOMPath, DPos - 1) & "Desktop/Jobs/" & FeedFile
     
- 
+    
     Workbooks.Open (FeederPath)
     
     Dim FeederBOM As Range
@@ -116,13 +117,16 @@ Sub UpdateFeeder_List()
                 End With
             End If
         Next
-       
+        
         
         
     End With
     
     
-   
+    
 End Sub
+
+
+
 
 
