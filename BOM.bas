@@ -45,7 +45,8 @@ Sub gotoValue()
     Feeder = InputBox("Feeder")   'get feeder from scan
     Feede = Right(Feeder, Len(Feeder) - 2)  'delete @ and ~
     If Len(Feede) = 1 And Feede = "1" Then  'If length is 1 char, and the char is 1, do nothing (exit/cancel)
-        
+    ElseIf Len(LessPreValue) = 1 And LessPreValue = "2" Then    'erase when scanning 2
+        Application.ActiveCell.Value = ""
     Else
         Feed = (Left(Feede, 1)) 'else, assign feeder letter to Feed
         Feede = Right(Feede, Len(Feede) - 1)    'isolate feeder number
@@ -113,6 +114,7 @@ Sub UpdateFeeder_List()
                         Application.Goto FeederList.Offset(0, 3), True                          'Go to feeder value
                         Application.ActiveCell = Workbooks(WBOMFile).Worksheets("Sheet1").Range("C" & i).Value 'Make feeder value the same as BOM
                         Application.ActiveCell.Offset(0, 1) = Workbooks(WBOMFile).Worksheets("Sheet1").Range("D" & i).Value 'Make feeder profile same as BOM
+                        Application.ActiveCell.Offset(0, 2) = Date
                     End If
                 End With
             End If
@@ -124,6 +126,76 @@ Sub UpdateFeeder_List()
     
     
     
+End Sub
+
+
+
+
+Sub UpdatePartNumbersByFeeder()
+    
+    Dim CsvBOMPath As String
+    Dim WBOMFile As String
+    Dim CsvBOMFile As String
+    Dim SlashPos As Long
+    
+    WBOMFile = ThisWorkbook.Name
+    
+    With Application.FileDialog(msoFileDialogFilePicker)
+'Makes sure the user can select only one file
+        .AllowMultiSelect = False
+'Filter to just the following types of files to narrow down selection options
+        .Filters.Add "csv", "*.csv", 1
+'Show the dialog box
+        .Show
+'Store in fullpath variable
+        CsvBOMPath = .SelectedItems.Item(1)
+    End With
+    
+    SlashPos = InStrRev(CsvBOMPath, "\")
+    CsvBOMFile = Right(CsvBOMPath, Len(CsvBOMPath) - SlashPos)
+    
+    
+    Dim ValueWBOM As Range
+    Dim ValueCsvBOM As Range
+    Dim LastRow As Long
+    Dim i As Integer
+    Dim FeederLoc As String
+    Dim FeederType As String
+    
+    
+    
+    
+    Workbooks.Open (CsvBOMPath)
+    With Workbooks(WBOMFile).Worksheets("Sheet1")                       'On sheet1, only sheet in file
+        LastRow = .Cells(.Rows.Count, "C").End(xlUp).Row                'get last row containing value in WBOM
+        For i = 2 To LastRow Step 1
+            Set ValueWBOM = Workbooks(WBOMFile).Worksheets("Sheet1").Range("C" & i)    'Loooping through BOM feeder column
+            FeederLoc = ValueWBOM.Offset(0, 5).Value                                   'get FeederLoc
+            FeederType = Left(FeederLoc, 1)                                            'Look at prefix of feeder
+            If FeederLoc = "" Then                                                        'If it's nothing, skip
+            ElseIf FeederType = "D" Or FeederType = "S" Then
+                'If it's T or S
+                With Workbooks(CsvBOMFile).ActiveSheet.Range("A:I")
+                'Search csvBom for value
+                    Set ValueCsvBOM = .Find(What:=ValueWBOM.Value, _
+                    After:=.Cells(.Cells.Count), _
+                    LookIn:=xlValues, _
+                    LookAt:=xlWhole, _
+                    SearchOrder:=xlByRows, _
+                    SearchDirection:=xlNext, _
+                    MatchCase:=False)                                                           'Find and select the matching cell, looking at values of entire cells by rows without case
+                    If Not ValueCsvBOM Is Nothing Then              'If found, append S- or T- prefix based on feeder type
+                        Select Case FeederType
+                        Case "S"
+                            ValueCsvBOM.Value = "S-" & ValueCsvBOM.Value
+                        Case "D"
+                            ValueCsvBOM.Value = "T-" & ValueCsvBOM.Value
+                        End Select
+                    End If
+                End With
+            End If
+        Next
+    End With
 End Sub
 
 

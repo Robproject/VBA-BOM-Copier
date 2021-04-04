@@ -41,11 +41,11 @@ Sub gotoFeeder()
     Dim Value As String
     Dim LessPreValue As String
     Value = InputBox("Value")       'get part value
-    LessPreValue = Right(Value, Len(Value) - 1)     'trim prefix
-    If Len(LessPreValue) = 1 And LessPreValue = "1" Then    'if not 1, apply value
-        
+    LessPreValue = Right(Value, Len(Value) - 2)     'trim prefix
+    If Len(LessPreValue) = 1 And LessPreValue = "1" Then    'cancel when scanning 1
+    ElseIf Len(LessPreValue) = 1 And LessPreValue = "2" Then    'erase when scanning 2
+        Application.ActiveCell.Value = ""
     Else
-        
         Application.ActiveCell = LessPreValue   'write value to cell
         Beep
     End If
